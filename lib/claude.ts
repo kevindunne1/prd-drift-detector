@@ -73,7 +73,9 @@ export class ClaudeAnalyzer {
       )
       .join("\n\n");
 
-    return `You are analyzing PRD-to-delivery alignment for a product team.
+    return `You are analysing PRD-to-delivery alignment for a product team.
+
+**IMPORTANT**: Use UK English spelling in all your responses (analyse, organisation, realise, prioritise, etc.).
 
 ## PRD REQUIREMENTS:
 ${requirementsText}
@@ -82,7 +84,7 @@ ${requirementsText}
 ${issuesText}
 
 ## YOUR TASK:
-Analyze the drift between the PRD requirements and the actual GitHub issues (delivery).
+Analyse the drift between the PRD requirements and the actual GitHub issues (delivery).
 
 For each requirement, determine:
 1. **Status**: delivered (requirement fully met), partial (requirement partially met), missing (not started), or in_progress (work ongoing)
