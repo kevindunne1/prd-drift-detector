@@ -34,6 +34,7 @@ export class ClaudeAnalyzer {
       const message = await this.client.messages.create({
         model: "claude-3-haiku-20240307",
         max_tokens: 4096,
+        temperature: 0,
         messages: [
           {
             role: "user",
@@ -93,9 +94,9 @@ For each requirement, determine:
 4. **Risk Level**: low (on track, no concerns), medium (minor issues, scope reduction), high (major drift, blocked, or not started)
 
 Also provide:
-- **Completion Percentage**: What % of PRD requirements are fully delivered?
-- **Risk Score**: 0-100 (0 = no risk, 100 = critical risk)
-- **Timeline Drift**: Brief assessment of whether delivery is on track, behind, or ahead
+- **Completion Percentage**: Calculate as (number of "delivered" requirements / total requirements) × 100. Only count requirements with status="delivered" as complete.
+- **Risk Score**: 0-100 (0 = no risk, 100 = critical risk). Base this on the count and severity of high-risk items.
+- **Timeline Drift**: Brief factual assessment based on the status of requirements (e.g., "X requirements delivered, Y in progress, Z missing")
 - **Summary**: 2-3 sentence overall assessment
 
 Return your analysis as JSON in this exact format:
