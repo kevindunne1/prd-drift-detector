@@ -19,6 +19,8 @@ export default function ConfigForm({ onAnalyze, loading }: ConfigFormProps) {
   const [repository, setRepository] = useState("");
   const [prdPath, setPrdPath] = useState("docs/prd.md");
   const [issueLabels, setIssueLabels] = useState("");
+  const [showGithubToken, setShowGithubToken] = useState(false);
+  const [showAnthropicKey, setShowAnthropicKey] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,15 +82,24 @@ export default function ConfigForm({ onAnalyze, loading }: ConfigFormProps) {
         <label htmlFor="githubToken" className="block text-sm font-medium text-slate-700 mb-1">
           GitHub Personal Access Token
         </label>
-        <input
-          type="password"
-          id="githubToken"
-          value={githubToken}
-          onChange={(e) => setGithubToken(e.target.value)}
-          placeholder="ghp_xxxxxxxxxxxx"
-          className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          required
-        />
+        <div className="relative">
+          <input
+            type={showGithubToken ? "text" : "password"}
+            id="githubToken"
+            value={githubToken}
+            onChange={(e) => setGithubToken(e.target.value)}
+            placeholder="ghp_xxxxxxxxxxxx"
+            className="w-full px-3 py-2 pr-10 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          />
+          <button
+            type="button"
+            onClick={() => setShowGithubToken(!showGithubToken)}
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700"
+          >
+            {showGithubToken ? "👁️" : "👁️‍🗨️"}
+          </button>
+        </div>
         <p className="text-xs text-slate-500 mt-1">
           Create at: github.com/settings/tokens (needs repo read access)
         </p>
@@ -98,15 +109,24 @@ export default function ConfigForm({ onAnalyze, loading }: ConfigFormProps) {
         <label htmlFor="anthropicKey" className="block text-sm font-medium text-slate-700 mb-1">
           Anthropic API Key
         </label>
-        <input
-          type="password"
-          id="anthropicKey"
-          value={anthropicKey}
-          onChange={(e) => setAnthropicKey(e.target.value)}
-          placeholder="sk-ant-xxxxxxxxxxxx"
-          className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          required
-        />
+        <div className="relative">
+          <input
+            type={showAnthropicKey ? "text" : "password"}
+            id="anthropicKey"
+            value={anthropicKey}
+            onChange={(e) => setAnthropicKey(e.target.value)}
+            placeholder="sk-ant-xxxxxxxxxxxx"
+            className="w-full px-3 py-2 pr-10 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          />
+          <button
+            type="button"
+            onClick={() => setShowAnthropicKey(!showAnthropicKey)}
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700"
+          >
+            {showAnthropicKey ? "👁️" : "👁️‍🗨️"}
+          </button>
+        </div>
         <p className="text-xs text-slate-500 mt-1">
           Get your key at: console.anthropic.com
         </p>
@@ -117,7 +137,7 @@ export default function ConfigForm({ onAnalyze, loading }: ConfigFormProps) {
         disabled={loading}
         className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:bg-slate-400 disabled:cursor-not-allowed font-medium"
       >
-        {loading ? "Analyzing..." : "Analyze PRD Drift"}
+        {loading ? "Analysing..." : "Analyse PRD Drift"}
       </button>
     </form>
   );
