@@ -59,9 +59,9 @@ export default function DashboardContainer() {
           <ConfigForm onAnalyze={handleAnalyze} loading={loading} />
 
           {error && (
-            <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-800 font-medium">Error</p>
-              <p className="text-red-600 text-sm">{error}</p>
+            <div className="mt-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+              <p className="text-red-800 dark:text-red-200 font-medium">Error</p>
+              <p className="text-red-600 dark:text-red-300 text-sm">{error}</p>
             </div>
           )}
         </div>
@@ -72,13 +72,13 @@ export default function DashboardContainer() {
         {analysis && metadata ? (
           <DriftDashboard analysis={analysis} metadata={metadata} />
         ) : (
-          <div className="hidden lg:flex items-center justify-center h-96 bg-white rounded-lg border-2 border-dashed border-slate-200">
+          <div className="hidden lg:flex items-center justify-center h-96 bg-white dark:bg-slate-800 rounded-lg border-2 border-dashed border-slate-200 dark:border-slate-700">
             <div className="text-center">
-              <svg className="mx-auto h-12 w-12 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="mx-auto h-12 w-12 text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
               </svg>
-              <p className="mt-4 text-slate-600 font-medium">Analysis results will appear here</p>
-              <p className="mt-1 text-sm text-slate-500">Configure and run your first drift analysis</p>
+              <p className="mt-4 text-slate-600 dark:text-slate-300 font-medium">Analysis results will appear here</p>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Configure and run your first drift analysis</p>
             </div>
           </div>
         )}
