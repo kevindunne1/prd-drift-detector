@@ -53,7 +53,7 @@ export class ClaudeAnalyzer {
       throw new Error(
         error.message ||
         error.error?.message ||
-        "Failed to analyze drift with Claude"
+        "Failed to analyse drift with Claude"
       );
     }
   }
@@ -165,7 +165,7 @@ Be precise, objective, and focus on identifying genuine drift (not minor impleme
       return {
         completionPercentage: 0,
         riskScore: 100,
-        timelineDrift: "Unable to analyze",
+        timelineDrift: "Unable to analyse",
         requirementsDrift: requirements.map((req) => ({
           requirement: req,
           status: "missing" as const,

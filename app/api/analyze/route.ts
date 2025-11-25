@@ -42,7 +42,7 @@ export async function POST(request: Request) {
     console.error("Analysis error:", error);
     return NextResponse.json(
       {
-        error: error.message || "Failed to analyze repository",
+        error: error.message || "Failed to analyse repository",
         details: error.response?.data || error.toString(),
         stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
       },
@@ -55,7 +55,7 @@ export async function GET() {
   return NextResponse.json({
     message: "PRD Drift Detector API",
     endpoints: {
-      POST: "/api/analyze - Analyze PRD-to-delivery drift",
+      POST: "/api/analyze - Analyse PRD-to-delivery drift",
     },
   });
 }
