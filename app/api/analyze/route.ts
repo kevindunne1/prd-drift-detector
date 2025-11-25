@@ -41,7 +41,11 @@ export async function POST(request: Request) {
   } catch (error: any) {
     console.error("Analysis error:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to analyze repository" },
+      {
+        error: error.message || "Failed to analyze repository",
+        details: error.response?.data || error.toString(),
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      },
       { status: 500 }
     );
   }
