@@ -45,7 +45,7 @@ export default function ConfigForm({ onAnalyze, loading }: ConfigFormProps) {
           value={repository}
           onChange={(e) => setRepository(e.target.value)}
           placeholder="octocat/Hello-World"
-          className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2.5 text-base font-medium text-slate-900 placeholder:text-slate-400 bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           required
         />
       </div>
@@ -60,7 +60,7 @@ export default function ConfigForm({ onAnalyze, loading }: ConfigFormProps) {
           value={prdPath}
           onChange={(e) => setPrdPath(e.target.value)}
           placeholder="docs/prd.md"
-          className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2.5 text-base font-medium text-slate-900 placeholder:text-slate-400 bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
       </div>
 
@@ -74,7 +74,7 @@ export default function ConfigForm({ onAnalyze, loading }: ConfigFormProps) {
           value={issueLabels}
           onChange={(e) => setIssueLabels(e.target.value)}
           placeholder="feature, enhancement"
-          className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2.5 text-base font-medium text-slate-900 placeholder:text-slate-400 bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
       </div>
 
@@ -89,7 +89,7 @@ export default function ConfigForm({ onAnalyze, loading }: ConfigFormProps) {
             value={githubToken}
             onChange={(e) => setGithubToken(e.target.value)}
             placeholder="ghp_xxxxxxxxxxxx"
-            className="w-full px-3 py-2 pr-10 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2.5 pr-10 text-base font-medium text-slate-900 placeholder:text-slate-400 bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             required
           />
           <button
@@ -116,7 +116,7 @@ export default function ConfigForm({ onAnalyze, loading }: ConfigFormProps) {
             value={anthropicKey}
             onChange={(e) => setAnthropicKey(e.target.value)}
             placeholder="sk-ant-xxxxxxxxxxxx"
-            className="w-full px-3 py-2 pr-10 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2.5 pr-10 text-base font-medium text-slate-900 placeholder:text-slate-400 bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             required
           />
           <button
