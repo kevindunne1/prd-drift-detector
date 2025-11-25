@@ -87,6 +87,8 @@ ${issuesText}
 ## YOUR TASK:
 Analyse the drift between the PRD requirements and the actual GitHub issues (delivery).
 
+**IMPORTANT**: Each requirement should appear EXACTLY ONCE in your analysis. Do not create duplicate entries for the same requirement.
+
 For each requirement, determine:
 1. **Status**: delivered (requirement fully met), partial (requirement partially met), missing (not started), or in_progress (work ongoing)
 2. **Matched Issues**: Which GitHub issue numbers correspond to this requirement (if any)
@@ -153,11 +155,18 @@ Be precise, objective, and focus on identifying genuine drift (not minor impleme
         }
       );
 
+      // De-duplicate requirements based on requirement text
+      // Keep first occurrence of each unique requirement
+      const uniqueRequirementsDrift = requirementsDrift.filter(
+        (drift, index, self) =>
+          index === self.findIndex((d) => d.requirement.text === drift.requirement.text)
+      );
+
       return {
         completionPercentage: parsed.completionPercentage,
         riskScore: parsed.riskScore,
         timelineDrift: parsed.timelineDrift,
-        requirementsDrift,
+        requirementsDrift: uniqueRequirementsDrift,
         summary: parsed.summary,
       };
     } catch (error) {
