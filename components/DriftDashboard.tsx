@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { OverallAnalysis } from "@/lib/claude";
 
 interface DriftDashboardProps {
@@ -12,7 +13,17 @@ interface DriftDashboardProps {
   };
 }
 
+type ViewMode = "cards" | "table";
+type StatusFilter = "delivered" | "in_progress" | "partial" | "missing";
+
 export default function DriftDashboard({ analysis, metadata }: DriftDashboardProps) {
+  const [viewMode, setViewMode] = useState<ViewMode>("cards");
+  const [statusFilters, setStatusFilters] = useState<StatusFilter[]>([
+    "delivered",
+    "in_progress",
+    "partial",
+    "missing",
+  ]);
   const getRiskColor = (riskLevel: string) => {
     switch (riskLevel) {
       case "low":
@@ -53,6 +64,33 @@ export default function DriftDashboard({ analysis, metadata }: DriftDashboardPro
         return "text-red-600 dark:text-red-400";
       default:
         return "text-slate-600 dark:text-slate-400";
+    }
+  };
+
+  const toggleStatusFilter = (status: StatusFilter) => {
+    setStatusFilters((prev) =>
+      prev.includes(status)
+        ? prev.filter((s) => s !== status)
+        : [...prev, status]
+    );
+  };
+
+  const filteredRequirements = analysis.requirementsDrift.filter((drift) =>
+    statusFilters.includes(drift.status as StatusFilter)
+  );
+
+  const getStatusBadgeColor = (status: string) => {
+    switch (status) {
+      case "delivered":
+        return "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border border-green-300 dark:border-green-700";
+      case "in_progress":
+        return "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 border border-blue-300 dark:border-blue-700";
+      case "partial":
+        return "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 border border-yellow-300 dark:border-yellow-700";
+      case "missing":
+        return "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 border border-red-300 dark:border-red-700";
+      default:
+        return "bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-600";
     }
   };
 
@@ -113,9 +151,69 @@ export default function DriftDashboard({ analysis, metadata }: DriftDashboardPro
 
       {/* Requirements Drift Details */}
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md dark:shadow-slate-900/50 p-6">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Requirements Drift Analysis</h3>
-        <div className="space-y-4">
-          {analysis.requirementsDrift.map((drift, index) => (
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+            Requirements Drift Analysis ({filteredRequirements.length} of {analysis.requirementsDrift.length})
+          </h3>
+
+          {/* View Mode Toggle */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setViewMode("cards")}
+              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                viewMode === "cards"
+                  ? "bg-blue-600 dark:bg-blue-500 text-white"
+                  : "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600"
+              }`}
+            >
+              Cards
+            </button>
+            <button
+              onClick={() => setViewMode("table")}
+              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                viewMode === "table"
+                  ? "bg-blue-600 dark:bg-blue-500 text-white"
+                  : "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600"
+              }`}
+            >
+              Table
+            </button>
+          </div>
+        </div>
+
+        {/* Status Filters */}
+        <div className="mb-4 flex flex-wrap gap-2">
+          <span className="text-sm font-medium text-slate-600 dark:text-slate-400 self-center">Filter:</span>
+          {[
+            { status: "delivered" as StatusFilter, label: "Delivered", icon: "✅" },
+            { status: "in_progress" as StatusFilter, label: "In Progress", icon: "🔄" },
+            { status: "partial" as StatusFilter, label: "Partial", icon: "⚠️" },
+            { status: "missing" as StatusFilter, label: "Missing", icon: "❌" },
+          ].map(({ status, label, icon }) => (
+            <button
+              key={status}
+              onClick={() => toggleStatusFilter(status)}
+              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
+                statusFilters.includes(status)
+                  ? getStatusBadgeColor(status)
+                  : "bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-600 opacity-50"
+              }`}
+            >
+              <span className="mr-1">{icon}</span>
+              {label}
+            </button>
+          ))}
+          {statusFilters.length === 0 && (
+            <span className="text-sm text-slate-500 dark:text-slate-400 italic self-center">
+              (Select at least one filter to view requirements)
+            </span>
+          )}
+        </div>
+
+        {/* Cards View */}
+        {viewMode === "cards" && (
+          <div className="space-y-4">
+            {filteredRequirements.map((drift, index) => (
             <div
               key={index}
               className={`p-4 border rounded-lg ${getRiskColor(drift.riskLevel)}`}
@@ -166,7 +264,84 @@ export default function DriftDashboard({ analysis, metadata }: DriftDashboardPro
               </div>
             </div>
           ))}
-        </div>
+          </div>
+        )}
+
+        {/* Table View */}
+        {viewMode === "table" && (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 dark:border-slate-700">
+                  <th className="text-left py-3 px-2 font-semibold text-slate-700 dark:text-slate-300">Status</th>
+                  <th className="text-left py-3 px-2 font-semibold text-slate-700 dark:text-slate-300">Requirement</th>
+                  <th className="text-left py-3 px-2 font-semibold text-slate-700 dark:text-slate-300">Drift Description</th>
+                  <th className="text-left py-3 px-2 font-semibold text-slate-700 dark:text-slate-300">Risk</th>
+                  <th className="text-left py-3 px-2 font-semibold text-slate-700 dark:text-slate-300">Issues</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredRequirements.map((drift, index) => (
+                  <tr
+                    key={index}
+                    className="border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50"
+                  >
+                    <td className="py-3 px-2">
+                      <span className="flex items-center gap-2">
+                        <span className="text-xl">{getStatusIcon(drift.status)}</span>
+                        <span className={`text-xs font-medium ${getStatusColor(drift.status)}`}>
+                          {drift.status.replace("_", " ").toUpperCase()}
+                        </span>
+                      </span>
+                    </td>
+                    <td className="py-3 px-2">
+                      <p className="font-medium text-slate-900 dark:text-white">{drift.requirement.text}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        Section: {drift.requirement.section}
+                      </p>
+                    </td>
+                    <td className="py-3 px-2 text-slate-700 dark:text-slate-300">
+                      {drift.driftDescription}
+                    </td>
+                    <td className="py-3 px-2">
+                      <span
+                        className={`inline-block px-2 py-1 rounded text-xs font-medium ${getRiskColor(
+                          drift.riskLevel
+                        )}`}
+                      >
+                        {drift.riskLevel.toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="py-3 px-2">
+                      {drift.matchedIssues.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {drift.matchedIssues.map((issueNum) => (
+                            <a
+                              key={issueNum}
+                              href={`https://github.com/${metadata.repository}/issues/${issueNum}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 px-2 py-1 rounded"
+                            >
+                              #{issueNum}
+                            </a>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-slate-400 dark:text-slate-500">None</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {filteredRequirements.length === 0 && (
+              <div className="text-center py-8 text-slate-500 dark:text-slate-400">
+                No requirements match the selected filters.
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
