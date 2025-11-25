@@ -47,9 +47,14 @@ export class ClaudeAnalyzer {
         : "";
 
       return this.parseAnalysisResponse(responseText, requirements);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error calling Claude API:", error);
-      throw new Error("Failed to analyze drift with Claude");
+      // Pass through the actual error details
+      throw new Error(
+        error.message ||
+        error.error?.message ||
+        "Failed to analyze drift with Claude"
+      );
     }
   }
 
