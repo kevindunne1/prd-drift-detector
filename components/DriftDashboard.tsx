@@ -14,7 +14,7 @@ interface DriftDashboardProps {
 }
 
 type ViewMode = "cards" | "table";
-type StatusFilter = "delivered" | "in_progress" | "partial" | "missing";
+type StatusFilter = "delivered" | "in_progress" | "partial" | "missing" | "out_of_scope";
 
 export default function DriftDashboard({ analysis, metadata }: DriftDashboardProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("cards");
@@ -23,6 +23,7 @@ export default function DriftDashboard({ analysis, metadata }: DriftDashboardPro
     "in_progress",
     "partial",
     "missing",
+    "out_of_scope",
   ]);
   const getRiskColor = (riskLevel: string) => {
     switch (riskLevel) {
@@ -47,6 +48,8 @@ export default function DriftDashboard({ analysis, metadata }: DriftDashboardPro
         return "⚠️";
       case "missing":
         return "❌";
+      case "out_of_scope":
+        return "⊗";
       default:
         return "❓";
     }
@@ -62,6 +65,8 @@ export default function DriftDashboard({ analysis, metadata }: DriftDashboardPro
         return "text-yellow-600 dark:text-yellow-400";
       case "missing":
         return "text-red-600 dark:text-red-400";
+      case "out_of_scope":
+        return "text-slate-600 dark:text-slate-400";
       default:
         return "text-slate-600 dark:text-slate-400";
     }
@@ -89,6 +94,8 @@ export default function DriftDashboard({ analysis, metadata }: DriftDashboardPro
         return "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 border border-yellow-300 dark:border-yellow-700";
       case "missing":
         return "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 border border-red-300 dark:border-red-700";
+      case "out_of_scope":
+        return "bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-600";
       default:
         return "bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-600";
     }
@@ -324,6 +331,7 @@ export default function DriftDashboard({ analysis, metadata }: DriftDashboardPro
             { status: "in_progress" as StatusFilter, label: "In Progress", icon: "🔄" },
             { status: "partial" as StatusFilter, label: "Partial", icon: "⚠️" },
             { status: "missing" as StatusFilter, label: "Missing", icon: "❌" },
+            { status: "out_of_scope" as StatusFilter, label: "Out of Scope", icon: "⊗" },
           ].map(({ status, label, icon }) => (
             <button
               key={status}
