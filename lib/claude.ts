@@ -64,7 +64,7 @@ export class ClaudeAnalyzer {
     issues: GitHubIssue[]
   ): string {
     const requirementsText = requirements
-      .map((req, idx) => `${idx + 1}. [${req.section}] ${req.text}`)
+      .map((req) => `${req.id}. [${req.section}] ${req.text}`)
       .join("\n");
 
     const issuesText = issues

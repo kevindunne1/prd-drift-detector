@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface ConfigFormProps {
   onAnalyze: (config: {
@@ -21,6 +21,59 @@ export default function ConfigForm({ onAnalyze, loading }: ConfigFormProps) {
   const [issueLabels, setIssueLabels] = useState("");
   const [showGithubToken, setShowGithubToken] = useState(false);
   const [showAnthropicKey, setShowAnthropicKey] = useState(false);
+  const [lastAnalysisTime, setLastAnalysisTime] = useState<string | null>(null);
+
+  // Load saved config from localStorage on mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedConfig = localStorage.getItem("lastAnalysisConfig");
+      const savedTimestamp = localStorage.getItem("lastAnalysisTimestamp");
+
+      if (savedConfig) {
+        try {
+          const config = JSON.parse(savedConfig);
+          setGithubToken(config.githubToken || "");
+          setAnthropicKey(config.anthropicKey || "");
+          setRepository(config.repository || "");
+          setPrdPath(config.prdPath || "docs/prd.md");
+          setIssueLabels(config.issueLabels?.join(", ") || "");
+        } catch (e) {
+          console.error("Failed to load saved config:", e);
+        }
+      }
+
+      if (savedTimestamp) {
+        setLastAnalysisTime(savedTimestamp);
+      }
+    }
+  }, []);
+
+  // Update timestamp when analysis completes (loading becomes false after being true)
+  useEffect(() => {
+    if (!loading && typeof window !== "undefined") {
+      const savedTimestamp = localStorage.getItem("lastAnalysisTimestamp");
+      if (savedTimestamp) {
+        setLastAnalysisTime(savedTimestamp);
+      }
+    }
+  }, [loading]);
+
+  // Listen for localStorage changes (when widget runs analysis)
+  useEffect(() => {
+    const handleStorageChange = () => {
+      if (typeof window !== "undefined") {
+        const savedTimestamp = localStorage.getItem("lastAnalysisTimestamp");
+        if (savedTimestamp) {
+          setLastAnalysisTime(savedTimestamp);
+        }
+      }
+    };
+
+    // Poll every 1 second to check for localStorage updates
+    const interval = setInterval(handleStorageChange, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,8 +86,54 @@ export default function ConfigForm({ onAnalyze, loading }: ConfigFormProps) {
     });
   };
 
+  const handleRerun = () => {
+    if (githubToken && anthropicKey && repository) {
+      onAnalyze({
+        githubToken,
+        anthropicKey,
+        repository,
+        prdPath,
+        issueLabels: issueLabels.split(",").map((l) => l.trim()).filter(Boolean),
+      });
+    }
+  };
+
+  const formatTimestamp = (timestamp: string) => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return "just now";
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString();
+  };
+
   return (
     <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-800 rounded-lg shadow-md dark:shadow-slate-900/50 p-6 space-y-4">
+      {lastAnalysisTime && (
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">Last analysis</p>
+              <p className="text-sm text-blue-800 dark:text-blue-200">{formatTimestamp(lastAnalysisTime)}</p>
+            </div>
+            <button
+              type="button"
+              onClick={handleRerun}
+              disabled={loading || !githubToken || !anthropicKey || !repository}
+              className="ml-3 px-3 py-1.5 text-sm font-medium bg-blue-600 dark:bg-blue-500 text-white rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 disabled:bg-slate-400 dark:disabled:bg-slate-600 disabled:cursor-not-allowed transition-colors"
+            >
+              {loading ? "Running..." : "Re-run"}
+            </button>
+          </div>
+        </div>
+      )}
+
       <div>
         <label htmlFor="repository" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
           GitHub Repository (owner/repo)

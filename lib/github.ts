@@ -88,8 +88,9 @@ export class GitHubClient {
     const requirements: PRDRequirement[] = [];
     const lines = prdContent.split("\n");
     let currentSection = "General";
+    let reqCounter = 0; // Sequential counter for requirement IDs
 
-    lines.forEach((line, index) => {
+    lines.forEach((line) => {
       // Detect section headers (e.g., ## Requirements, ### User Stories)
       const headerMatch = line.match(/^#+\s+(.+)/);
       if (headerMatch) {
@@ -102,8 +103,9 @@ export class GitHubClient {
       if (reqMatch) {
         const text = reqMatch[1] || reqMatch[2];
         if (text && text.length > 10) { // Filter out very short items
+          reqCounter++;
           requirements.push({
-            id: `req-${index}`,
+            id: `req-${reqCounter}`,
             text: text.trim(),
             section: currentSection,
           });
@@ -113,8 +115,9 @@ export class GitHubClient {
       // Extract user stories
       const userStoryMatch = line.match(/As a (.+), I want (.+)/i);
       if (userStoryMatch) {
+        reqCounter++;
         requirements.push({
-          id: `req-${index}`,
+          id: `req-${reqCounter}`,
           text: line.trim(),
           section: "User Stories",
         });
