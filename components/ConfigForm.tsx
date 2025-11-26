@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { getRandomLoadingVerb } from "@/lib/loading-verbs";
 
 interface ConfigFormProps {
   onAnalyze: (config: {
@@ -9,11 +10,13 @@ interface ConfigFormProps {
     repository: string;
     prdPath: string;
     issueLabels: string[];
+    usePublicAPI: boolean;
   }) => void;
   loading: boolean;
 }
 
 export default function ConfigForm({ onAnalyze, loading }: ConfigFormProps) {
+  const [demoMode, setDemoMode] = useState(true); // Default to demo mode
   const [githubToken, setGithubToken] = useState("");
   const [anthropicKey, setAnthropicKey] = useState("");
   const [repository, setRepository] = useState("");
@@ -22,6 +25,7 @@ export default function ConfigForm({ onAnalyze, loading }: ConfigFormProps) {
   const [showGithubToken, setShowGithubToken] = useState(false);
   const [showAnthropicKey, setShowAnthropicKey] = useState(false);
   const [lastAnalysisTime, setLastAnalysisTime] = useState<string | null>(null);
+  const [loadingVerb, setLoadingVerb] = useState("Analysing");
 
   // Load saved config from localStorage on mount
   useEffect(() => {
@@ -77,23 +81,33 @@ export default function ConfigForm({ onAnalyze, loading }: ConfigFormProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setLoadingVerb(getRandomLoadingVerb());
     onAnalyze({
       githubToken,
       anthropicKey,
       repository,
       prdPath,
       issueLabels: issueLabels.split(",").map((l) => l.trim()).filter(Boolean),
+      usePublicAPI: demoMode,
     });
   };
 
   const handleRerun = () => {
-    if (githubToken && anthropicKey && repository) {
+    // In demo mode, only require githubToken and repository
+    // In private mode, also require anthropicKey
+    const hasRequiredFields = demoMode
+      ? (githubToken && repository)
+      : (githubToken && anthropicKey && repository);
+
+    if (hasRequiredFields) {
+      setLoadingVerb(getRandomLoadingVerb());
       onAnalyze({
         githubToken,
         anthropicKey,
         repository,
         prdPath,
         issueLabels: issueLabels.split(",").map((l) => l.trim()).filter(Boolean),
+        usePublicAPI: demoMode,
       });
     }
   };
@@ -125,14 +139,35 @@ export default function ConfigForm({ onAnalyze, loading }: ConfigFormProps) {
             <button
               type="button"
               onClick={handleRerun}
-              disabled={loading || !githubToken || !anthropicKey || !repository}
+              disabled={loading || !githubToken || !repository || (!demoMode && !anthropicKey)}
               className="ml-3 px-3 py-1.5 text-sm font-medium bg-blue-600 dark:bg-blue-500 text-white rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 disabled:bg-slate-400 dark:disabled:bg-slate-600 disabled:cursor-not-allowed transition-colors"
             >
-              {loading ? "Running..." : "Re-run"}
+              {loading ? `${loadingVerb}...` : "Re-run"}
             </button>
           </div>
         </div>
       )}
+
+      {/* Demo Mode Toggle */}
+      <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+        <div className="flex items-start gap-3">
+          <input
+            type="checkbox"
+            id="demoMode"
+            checked={demoMode}
+            onChange={(e) => setDemoMode(e.target.checked)}
+            className="mt-1 h-4 w-4 rounded border-green-300 text-green-600 focus:ring-green-500"
+          />
+          <div className="flex-1">
+            <label htmlFor="demoMode" className="text-sm font-medium text-green-800 dark:text-green-200 cursor-pointer">
+              Use Public Demo (Recommended)
+            </label>
+            <p className="text-xs text-green-700 dark:text-green-300 mt-1">
+              Free to use • No Anthropic API key needed • 5 analyses per day
+            </p>
+          </div>
+        </div>
+      </div>
 
       <div>
         <label htmlFor="repository" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
@@ -204,39 +239,41 @@ export default function ConfigForm({ onAnalyze, loading }: ConfigFormProps) {
         </p>
       </div>
 
-      <div>
-        <label htmlFor="anthropicKey" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-          Anthropic API Key
-        </label>
-        <div className="relative">
-          <input
-            type={showAnthropicKey ? "text" : "password"}
-            id="anthropicKey"
-            value={anthropicKey}
-            onChange={(e) => setAnthropicKey(e.target.value)}
-            placeholder="sk-ant-xxxxxxxxxxxx"
-            className="w-full px-3 py-2.5 pr-10 text-base font-medium text-slate-900 placeholder:text-slate-400 bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            required
-          />
-          <button
-            type="button"
-            onClick={() => setShowAnthropicKey(!showAnthropicKey)}
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
-          >
-            {showAnthropicKey ? "👁️" : "👁️‍🗨️"}
-          </button>
+      {!demoMode && (
+        <div>
+          <label htmlFor="anthropicKey" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            Anthropic API Key
+          </label>
+          <div className="relative">
+            <input
+              type={showAnthropicKey ? "text" : "password"}
+              id="anthropicKey"
+              value={anthropicKey}
+              onChange={(e) => setAnthropicKey(e.target.value)}
+              placeholder="sk-ant-xxxxxxxxxxxx"
+              className="w-full px-3 py-2.5 pr-10 text-base font-medium text-slate-900 placeholder:text-slate-400 bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              required={!demoMode}
+            />
+            <button
+              type="button"
+              onClick={() => setShowAnthropicKey(!showAnthropicKey)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+            >
+              {showAnthropicKey ? "👁️" : "👁️‍🗨️"}
+            </button>
+          </div>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            Get your key at: console.anthropic.com
+          </p>
         </div>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-          Get your key at: console.anthropic.com
-        </p>
-      </div>
+      )}
 
       <button
         type="submit"
         disabled={loading}
         className="w-full bg-blue-600 dark:bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 disabled:bg-slate-400 dark:disabled:bg-slate-600 disabled:cursor-not-allowed font-medium"
       >
-        {loading ? "Analysing..." : "Analyse PRD Drift"}
+        {loading ? `${loadingVerb}...` : "Analyse PRD Drift"}
       </button>
     </form>
   );

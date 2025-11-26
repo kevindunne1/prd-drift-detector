@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { OverallAnalysis } from "@/lib/claude";
 import { useTheme } from "./ThemeProvider";
+import { getRandomLoadingVerb } from "@/lib/loading-verbs";
 
 interface FloatingSummaryProps {
   analysis: OverallAnalysis | null;
@@ -27,12 +28,14 @@ export default function FloatingSummary({ analysis: initialAnalysis, onAnalysisC
   const [error, setError] = useState<string | null>(null);
 
   // Config form state
+  const [demoMode, setDemoMode] = useState(true); // Default to demo mode
   const [githubToken, setGithubToken] = useState("");
   const [anthropicKey, setAnthropicKey] = useState("");
   const [repository, setRepository] = useState("");
   const [prdPath, setPrdPath] = useState("docs/prd.md");
   const [issueLabels, setIssueLabels] = useState("");
   const [lastAnalysisTime, setLastAnalysisTime] = useState<string | null>(null);
+  const [loadingVerb, setLoadingVerb] = useState("Analysing");
 
   // Load saved config and previous analysis from localStorage on mount
   useEffect(() => {
@@ -85,19 +88,31 @@ export default function FloatingSummary({ analysis: initialAnalysis, onAnalysisC
   }, [initialAnalysis]);
 
   const handleAnalyze = async () => {
+    setLoadingVerb(getRandomLoadingVerb());
     setLoading(true);
     setError(null);
 
     try {
-      const config = {
-        githubToken,
-        anthropicKey,
-        repository,
-        prdPath,
-        issueLabels: issueLabels.split(",").map((l) => l.trim()).filter(Boolean),
-      };
+      // Choose endpoint based on demo mode
+      const endpoint = demoMode ? "/api/analyze-public" : "/api/analyze";
 
-      const response = await fetch("/api/analyze", {
+      // Prepare config (exclude anthropicKey if using public API)
+      const config = demoMode
+        ? {
+            githubToken,
+            repository,
+            prdPath,
+            issueLabels: issueLabels.split(",").map((l) => l.trim()).filter(Boolean),
+          }
+        : {
+            githubToken,
+            anthropicKey,
+            repository,
+            prdPath,
+            issueLabels: issueLabels.split(",").map((l) => l.trim()).filter(Boolean),
+          };
+
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -108,6 +123,11 @@ export default function FloatingSummary({ analysis: initialAnalysis, onAnalysisC
       const result = await response.json();
 
       if (!response.ok) {
+        // Handle rate limit error specially
+        if (response.status === 429) {
+          const resetDate = result.resetAt ? new Date(result.resetAt).toLocaleString() : "later";
+          throw new Error(`${result.message || "Rate limit exceeded. Please try again after " + resetDate}`);
+        }
         throw new Error(result.error || "Failed to analyze");
       }
 
@@ -156,8 +176,12 @@ export default function FloatingSummary({ analysis: initialAnalysis, onAnalysisC
 
     const breakdown = { high: 0, medium: 0, low: 0 };
     analysis.requirementsDrift.forEach((drift) => {
-      // Only count risks for requirements that are not yet delivered
-      if (drift.status !== "delivered") {
+      // Only count risks for requirements that are active (not delivered or out of scope)
+      // Use lowercase comparison to handle case variations
+      const status = (drift.status || "").toLowerCase().trim();
+
+      // Exclude delivered requirements and out-of-scope items
+      if (status !== "delivered" && status !== "out_of_scope") {
         if (drift.riskLevel === "high") breakdown.high++;
         else if (drift.riskLevel === "medium") breakdown.medium++;
         else if (drift.riskLevel === "low") breakdown.low++;
@@ -565,6 +589,27 @@ export default function FloatingSummary({ analysis: initialAnalysis, onAnalysisC
           </div>
 
           <form onSubmit={(e) => { e.preventDefault(); handleAnalyze(); }} className="space-y-4">
+            {/* Demo Mode Toggle */}
+            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
+              <div className="flex items-start gap-2">
+                <input
+                  type="checkbox"
+                  id="widgetDemoMode"
+                  checked={demoMode}
+                  onChange={(e) => setDemoMode(e.target.checked)}
+                  className="mt-0.5 h-3.5 w-3.5 rounded border-green-300 text-green-600 focus:ring-green-500"
+                />
+                <div className="flex-1">
+                  <label htmlFor="widgetDemoMode" className="text-xs font-medium text-green-800 dark:text-green-200 cursor-pointer">
+                    Use Public Demo (Recommended)
+                  </label>
+                  <p className="text-xs text-green-700 dark:text-green-300 mt-0.5">
+                    Free • No API key needed • 5/day
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <div>
               <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                 GitHub Repository (owner/repo)
@@ -622,22 +667,24 @@ export default function FloatingSummary({ analysis: initialAnalysis, onAnalysisC
               </p>
             </div>
 
-            <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Anthropic API Key
-              </label>
-              <input
-                type="password"
-                value={anthropicKey}
-                onChange={(e) => setAnthropicKey(e.target.value)}
-                placeholder="sk-ant-xxxxxxxxxxxx"
-                className="w-full px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
-              />
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                Get at: console.anthropic.com
-              </p>
-            </div>
+            {!demoMode && (
+              <div>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Anthropic API Key
+                </label>
+                <input
+                  type="password"
+                  value={anthropicKey}
+                  onChange={(e) => setAnthropicKey(e.target.value)}
+                  placeholder="sk-ant-xxxxxxxxxxxx"
+                  className="w-full px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required={!demoMode}
+                />
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  Get at: console.anthropic.com
+                </p>
+              </div>
+            )}
 
             {error && (
               <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
@@ -651,7 +698,7 @@ export default function FloatingSummary({ analysis: initialAnalysis, onAnalysisC
               disabled={loading}
               className="w-full bg-blue-600 dark:bg-blue-500 text-white py-2.5 px-4 rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 disabled:bg-slate-400 dark:disabled:bg-slate-600 disabled:cursor-not-allowed font-medium text-sm transition-colors"
             >
-              {loading ? "Analysing..." : "Analyse PRD Drift"}
+              {loading ? `${loadingVerb}...` : "Analyse PRD Drift"}
             </button>
           </form>
         </div>

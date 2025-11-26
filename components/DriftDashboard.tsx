@@ -121,25 +121,160 @@ export default function DriftDashboard({ analysis, metadata }: DriftDashboardPro
 
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md dark:shadow-slate-900/50 p-6 border-l-4 border-blue-500">
-          <h3 className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Completion</h3>
-          <p className="text-3xl font-bold text-slate-900 dark:text-white">
-            {analysis.completionPercentage}%
-          </p>
+        {/* Completion Card with Circular Gauge */}
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md dark:shadow-slate-900/50 p-6">
+          <h3 className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-4">Completion</h3>
+          <div className="flex items-center justify-center">
+            <div className="relative w-32 h-32">
+              <svg className="transform -rotate-90" width="128" height="128">
+                <circle
+                  cx="64"
+                  cy="64"
+                  r="56"
+                  stroke="currentColor"
+                  strokeWidth="8"
+                  fill="none"
+                  className="text-slate-200 dark:text-slate-700"
+                />
+                <circle
+                  cx="64"
+                  cy="64"
+                  r="56"
+                  stroke={
+                    analysis.completionPercentage >= 80
+                      ? "#10b981"
+                      : analysis.completionPercentage >= 50
+                      ? "#f59e0b"
+                      : "#ef4444"
+                  }
+                  strokeWidth="8"
+                  fill="none"
+                  strokeDasharray={`${(analysis.completionPercentage / 100) * 351.86} 351.86`}
+                  strokeLinecap="round"
+                  className="transition-all duration-500"
+                />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-4xl font-bold text-slate-900 dark:text-white">
+                  {analysis.completionPercentage}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md dark:shadow-slate-900/50 p-6 border-l-4 border-orange-500">
-          <h3 className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Risk Score</h3>
-          <p className="text-3xl font-bold text-slate-900 dark:text-white">
-            {analysis.riskScore}/100
-          </p>
+        {/* Risk Score Card */}
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md dark:shadow-slate-900/50 p-6">
+          <h3 className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-4">Overall Risk Score</h3>
+          <div className="flex items-center justify-center h-32">
+            <p className="text-5xl font-bold text-slate-900 dark:text-white">
+              {analysis.riskScore}
+              <span className="text-2xl text-slate-500 dark:text-slate-400">/100</span>
+            </p>
+          </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md dark:shadow-slate-900/50 p-6 border-l-4 border-purple-500">
-          <h3 className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Timeline</h3>
-          <p className="text-lg font-semibold text-slate-900 dark:text-white">
-            {analysis.timelineDrift}
-          </p>
+        {/* Timeline Card with Planned vs Actual */}
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md dark:shadow-slate-900/50 p-6">
+          <h3 className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-4">Timeline Status</h3>
+          <div className="space-y-3">
+            <div className={`text-center px-3 py-1.5 rounded text-xs font-semibold ${
+              analysis.timelineDrift.toLowerCase().includes('ahead')
+                ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                : analysis.timelineDrift.toLowerCase().includes('on track') || analysis.timelineDrift.toLowerCase().includes('on schedule')
+                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+            }`}>
+              {analysis.timelineDrift}
+            </div>
+
+            {/* Planned Position */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-600 dark:text-slate-400 w-16">Planned</span>
+              <div className="flex-1 relative h-2">
+                <div className="absolute inset-0 bg-slate-200 dark:bg-slate-600 rounded-full"></div>
+                <div className="absolute inset-0 flex items-center">
+                  <div
+                    className="h-3 w-3 bg-green-500 border-2 border-white dark:border-slate-800 rounded-full shadow-sm"
+                    style={{ marginLeft: '75%', transform: 'translateX(-50%)' }}
+                  ></div>
+                </div>
+              </div>
+              <span className="text-xs font-medium text-slate-700 dark:text-slate-300 w-10 text-right">75%</span>
+            </div>
+
+            {/* Actual Position */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-600 dark:text-slate-400 w-16">Actual</span>
+              <div className="flex-1 relative h-2">
+                <div className="absolute inset-0 bg-slate-200 dark:bg-slate-600 rounded-full"></div>
+                <div
+                  className={`absolute inset-y-0 left-0 rounded-full ${
+                    analysis.timelineDrift.toLowerCase().includes('ahead')
+                      ? 'bg-green-500'
+                      : analysis.timelineDrift.toLowerCase().includes('on track') || analysis.timelineDrift.toLowerCase().includes('on schedule')
+                      ? 'bg-blue-500'
+                      : 'bg-red-500'
+                  }`}
+                  style={{
+                    width: analysis.timelineDrift.toLowerCase().includes('ahead')
+                      ? '60%'
+                      : analysis.timelineDrift.toLowerCase().includes('on track') || analysis.timelineDrift.toLowerCase().includes('on schedule')
+                      ? '75%'
+                      : '45%'
+                  }}
+                ></div>
+                <div className="absolute inset-0 flex items-center">
+                  <div
+                    className={`h-3 w-3 border-2 border-white dark:border-slate-800 rounded-full shadow-sm ${
+                      analysis.timelineDrift.toLowerCase().includes('ahead')
+                        ? 'bg-green-500'
+                        : analysis.timelineDrift.toLowerCase().includes('on track') || analysis.timelineDrift.toLowerCase().includes('on schedule')
+                        ? 'bg-blue-500'
+                        : 'bg-red-500'
+                    }`}
+                    style={{
+                      marginLeft: analysis.timelineDrift.toLowerCase().includes('ahead')
+                        ? '60%'
+                        : analysis.timelineDrift.toLowerCase().includes('on track') || analysis.timelineDrift.toLowerCase().includes('on schedule')
+                        ? '75%'
+                        : '45%',
+                      transform: 'translateX(-50%)'
+                    }}
+                  ></div>
+                </div>
+              </div>
+              <span className={`text-xs font-medium w-10 text-right ${
+                analysis.timelineDrift.toLowerCase().includes('ahead')
+                  ? 'text-green-600 dark:text-green-400'
+                  : analysis.timelineDrift.toLowerCase().includes('on track')
+                  ? 'text-blue-600 dark:text-blue-400'
+                  : 'text-red-600 dark:text-red-400'
+              }`}>
+                {analysis.timelineDrift.toLowerCase().includes('ahead')
+                  ? '60%'
+                  : analysis.timelineDrift.toLowerCase().includes('on track') || analysis.timelineDrift.toLowerCase().includes('on schedule')
+                  ? '75%'
+                  : '45%'}
+              </span>
+            </div>
+
+            {/* Delay Indicator */}
+            {!analysis.timelineDrift.toLowerCase().includes('ahead') && !analysis.timelineDrift.toLowerCase().includes('on track') && (
+              <div className="flex items-center gap-2 pt-1">
+                <span className="text-xs text-slate-500 dark:text-slate-400 w-16"></span>
+                <div className="flex-1">
+                  <div className="flex items-center gap-1 text-xs text-red-600 dark:text-red-400">
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <span className="font-medium">30% behind schedule</span>
+                  </div>
+                </div>
+                <span className="w-10"></span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

@@ -23,23 +23,42 @@ export default function DashboardContainer() {
     repository: string;
     prdPath: string;
     issueLabels: string[];
+    usePublicAPI: boolean;
   }) => {
     setLoading(true);
     setError(null);
     setAnalysis(null);
 
     try {
-      const response = await fetch("/api/analyze", {
+      // Choose endpoint based on usePublicAPI flag
+      const endpoint = config.usePublicAPI ? "/api/analyze-public" : "/api/analyze";
+
+      // Prepare request body (exclude anthropicKey if using public API)
+      const requestBody = config.usePublicAPI
+        ? {
+            githubToken: config.githubToken,
+            repository: config.repository,
+            prdPath: config.prdPath,
+            issueLabels: config.issueLabels,
+          }
+        : config;
+
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(config),
+        body: JSON.stringify(requestBody),
       });
 
       const result = await response.json();
 
       if (!response.ok) {
+        // Handle rate limit error specially
+        if (response.status === 429) {
+          const resetDate = result.resetAt ? new Date(result.resetAt).toLocaleString() : "later";
+          throw new Error(`${result.message || "Rate limit exceeded. Please try again after " + resetDate}`);
+        }
         throw new Error(result.error || "Failed to analyze");
       }
 

@@ -10,7 +10,7 @@ export default function Header() {
           PRD Drift Detector
         </h1>
         <p className="text-slate-600 dark:text-slate-400">
-          Real-time tracking of PRD-to-delivery alignment using GitHub Issues and Claude AI
+          Your PRD vs reality. Instant clarity on what&apos;s actually being built.
         </p>
       </div>
       <ThemeToggle />
