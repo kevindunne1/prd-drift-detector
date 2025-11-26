@@ -74,6 +74,17 @@ export default function FloatingSummary({ analysis: initialAnalysis, onAnalysisC
   // Update analysis when prop changes (main form ran analysis)
   useEffect(() => {
     if (initialAnalysis) {
+      // Store current analysis as previous before updating (same as handleAnalyze)
+      if (analysis && typeof window !== "undefined") {
+        const prev: PreviousAnalysis = {
+          completionPercentage: analysis.completionPercentage,
+          riskScore: analysis.riskScore,
+          timestamp: lastAnalysisTime || new Date().toISOString(),
+        };
+        localStorage.setItem("previousAnalysis", JSON.stringify(prev));
+        setPreviousAnalysis(prev);
+      }
+
       setAnalysis(initialAnalysis);
       setWidgetState("summary");
 
@@ -85,7 +96,7 @@ export default function FloatingSummary({ analysis: initialAnalysis, onAnalysisC
         }
       }
     }
-  }, [initialAnalysis]);
+  }, [initialAnalysis, analysis, lastAnalysisTime]);
 
   const handleAnalyze = async () => {
     setLoadingVerb(getRandomLoadingVerb());
@@ -191,7 +202,7 @@ export default function FloatingSummary({ analysis: initialAnalysis, onAnalysisC
     return breakdown;
   };
 
-  const getComparison = (current: number, previous: number | undefined) => {
+  const getComparison = (current: number, previous: number | undefined, unit: string = "") => {
     if (previous === undefined) return null;
     const diff = current - previous;
 
@@ -199,16 +210,16 @@ export default function FloatingSummary({ analysis: initialAnalysis, onAnalysisC
     if (diff === 0) {
       return {
         diff: 0,
-        prefix: "→",
+        text: `0${unit} from last run`,
         color: "text-slate-600 dark:text-slate-400",
         isPositive: null
       };
     }
 
     const isPositive = diff > 0;
-    const prefix = isPositive ? "↑" : "↓";
+    const text = `${isPositive ? '+' : ''}${diff}${unit} from last run`;
     const color = isPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400";
-    return { diff: Math.abs(diff), prefix, color, isPositive };
+    return { diff: Math.abs(diff), text, color, isPositive };
   };
 
   const formatTimestamp = (timestamp: string) => {
@@ -233,7 +244,7 @@ export default function FloatingSummary({ analysis: initialAnalysis, onAnalysisC
   };
 
   const riskBreakdown = getRiskBreakdown();
-  const completionComparison = analysis && previousAnalysis ? getComparison(analysis.completionPercentage, previousAnalysis.completionPercentage) : null;
+  const completionComparison = analysis && previousAnalysis ? getComparison(analysis.completionPercentage, previousAnalysis.completionPercentage, "%") : null;
   const riskComparison = analysis && previousAnalysis ? getComparison(previousAnalysis.riskScore, analysis.riskScore) : null; // Inverted: lower risk is better
 
   return (
@@ -366,7 +377,7 @@ export default function FloatingSummary({ analysis: initialAnalysis, onAnalysisC
                 <p className="text-sm font-semibold text-slate-900 dark:text-white">Completion</p>
                 {completionComparison && (
                   <p className={`text-xs font-medium ${completionComparison.color}`}>
-                    {completionComparison.prefix} {completionComparison.diff}% from last run
+                    {completionComparison.text}
                   </p>
                 )}
               </div>
@@ -408,7 +419,7 @@ export default function FloatingSummary({ analysis: initialAnalysis, onAnalysisC
                 <span className="text-xl font-bold text-slate-900 dark:text-white">{analysis.riskScore}/100</span>
                 {riskComparison && (
                   <p className={`text-xs font-medium ${riskComparison.color}`}>
-                    {riskComparison.prefix} {riskComparison.diff} from last run
+                    {riskComparison.text}
                   </p>
                 )}
               </div>
