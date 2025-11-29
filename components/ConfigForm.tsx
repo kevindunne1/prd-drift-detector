@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { getRandomLoadingVerb } from "@/lib/loading-verbs";
+import Tooltip from "./Tooltip";
 
 interface ConfigFormProps {
   onAnalyze: (config: {
@@ -170,9 +171,16 @@ export default function ConfigForm({ onAnalyze, loading }: ConfigFormProps) {
       </div>
 
       <div>
-        <label htmlFor="repository" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-          GitHub Repository (owner/repo)
-        </label>
+        <div className="flex items-center gap-1.5 mb-1">
+          <label htmlFor="repository" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+            GitHub Repository (owner/repo)
+          </label>
+          <Tooltip content="Format: owner/repository (e.g., facebook/react). Find this in your GitHub repo URL.">
+            <svg className="w-4 h-4 text-slate-400 dark:text-slate-500 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </Tooltip>
+        </div>
         <input
           type="text"
           id="repository"
@@ -185,9 +193,16 @@ export default function ConfigForm({ onAnalyze, loading }: ConfigFormProps) {
       </div>
 
       <div>
-        <label htmlFor="prdPath" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-          PRD File Path
-        </label>
+        <div className="flex items-center gap-1.5 mb-1">
+          <label htmlFor="prdPath" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+            PRD File Path
+          </label>
+          <Tooltip content="Path to your PRD markdown file in the repository (e.g., docs/prd.md or README.md)">
+            <svg className="w-4 h-4 text-slate-400 dark:text-slate-500 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </Tooltip>
+        </div>
         <input
           type="text"
           id="prdPath"
@@ -199,9 +214,16 @@ export default function ConfigForm({ onAnalyze, loading }: ConfigFormProps) {
       </div>
 
       <div>
-        <label htmlFor="issueLabels" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-          Issue Labels (comma-separated, optional)
-        </label>
+        <div className="flex items-center gap-1.5 mb-1">
+          <label htmlFor="issueLabels" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+            Issue Labels (comma-separated, optional)
+          </label>
+          <Tooltip content="Filter GitHub issues by labels (e.g., 'feature, enhancement'). Leave empty to analyze all issues.">
+            <svg className="w-4 h-4 text-slate-400 dark:text-slate-500 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </Tooltip>
+        </div>
         <input
           type="text"
           id="issueLabels"
@@ -213,9 +235,16 @@ export default function ConfigForm({ onAnalyze, loading }: ConfigFormProps) {
       </div>
 
       <div>
-        <label htmlFor="githubToken" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-          GitHub Personal Access Token
-        </label>
+        <div className="flex items-center gap-1.5 mb-1">
+          <label htmlFor="githubToken" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+            GitHub Personal Access Token
+          </label>
+          <Tooltip content="Create at github.com/settings/tokens. Needs 'repo' read access to fetch issues and PRD.">
+            <svg className="w-4 h-4 text-slate-400 dark:text-slate-500 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </Tooltip>
+        </div>
         <div className="relative">
           <input
             type={showGithubToken ? "text" : "password"}
@@ -241,9 +270,16 @@ export default function ConfigForm({ onAnalyze, loading }: ConfigFormProps) {
 
       {!demoMode && (
         <div>
-          <label htmlFor="anthropicKey" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-            Anthropic API Key
-          </label>
+          <div className="flex items-center gap-1.5 mb-1">
+            <label htmlFor="anthropicKey" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+              Anthropic API Key
+            </label>
+            <Tooltip content="Get your API key at console.anthropic.com. Used for AI-powered drift analysis.">
+              <svg className="w-4 h-4 text-slate-400 dark:text-slate-500 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </Tooltip>
+          </div>
           <div className="relative">
             <input
               type={showAnthropicKey ? "text" : "password"}

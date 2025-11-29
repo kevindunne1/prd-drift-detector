@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { OverallAnalysis } from "@/lib/claude";
 import { useTheme } from "./ThemeProvider";
 import { getRandomLoadingVerb } from "@/lib/loading-verbs";
+import Tooltip from "./Tooltip";
 
 interface FloatingSummaryProps {
   analysis: OverallAnalysis | null;
@@ -243,6 +244,12 @@ export default function FloatingSummary({ analysis: initialAnalysis, onAnalysisC
     return "#ef4444"; // red
   };
 
+  const getRiskLevel = (score: number) => {
+    if (score >= 70) return { label: "High Risk", color: "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300" };
+    if (score >= 40) return { label: "Moderate Risk", color: "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300" };
+    return { label: "Low Risk", color: "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300" };
+  };
+
   const riskBreakdown = getRiskBreakdown();
   const completionComparison = analysis && previousAnalysis ? getComparison(analysis.completionPercentage, previousAnalysis.completionPercentage, "%") : null;
   const riskComparison = analysis && previousAnalysis ? getComparison(previousAnalysis.riskScore, analysis.riskScore) : null; // Inverted: lower risk is better
@@ -375,7 +382,7 @@ export default function FloatingSummary({ analysis: initialAnalysis, onAnalysisC
               </div>
               <div className="mt-2 text-center">
                 <p className="text-sm font-semibold text-slate-900 dark:text-white">Completion</p>
-                {completionComparison && (
+                {completionComparison && completionComparison.diff > 0 && (
                   <p className={`text-xs font-medium ${completionComparison.color}`}>
                     {completionComparison.text}
                   </p>
@@ -413,32 +420,51 @@ export default function FloatingSummary({ analysis: initialAnalysis, onAnalysisC
 
           {/* Overall Risk Score */}
           <div className="mb-4 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Overall Risk Score</span>
               <div className="text-right">
-                <span className="text-xl font-bold text-slate-900 dark:text-white">{analysis.riskScore}/100</span>
-                {riskComparison && (
+                <div>
+                  <span className="text-xl font-bold text-slate-900 dark:text-white">{analysis.riskScore}</span>
+                  <span className="text-sm text-slate-500 dark:text-slate-400">/100</span>
+                </div>
+                {riskComparison && riskComparison.diff > 0 && (
                   <p className={`text-xs font-medium ${riskComparison.color}`}>
                     {riskComparison.text}
                   </p>
                 )}
               </div>
             </div>
+            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${getRiskLevel(analysis.riskScore).color}`}>
+              {getRiskLevel(analysis.riskScore).label}
+            </span>
           </div>
 
           {/* Timeline Status */}
           <div className="mb-4">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Timeline Status</span>
-              <span className={`text-xs font-semibold px-2 py-1 rounded ${
-                analysis.timelineDrift.toLowerCase().includes('ahead')
-                  ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-                  : analysis.timelineDrift.toLowerCase().includes('on track') || analysis.timelineDrift.toLowerCase().includes('on schedule')
-                  ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                  : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
-              }`}>
-                {analysis.timelineDrift}
-              </span>
+            <div className="mb-3">
+              <span className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">Timeline Status</span>
+
+              {/* Timeline Summary - using warning icons instead of boxes */}
+              {analysis.weeksBehind > 0 || analysis.featuresBlocked > 0 ? (
+                <div className="space-y-1.5 mb-3">
+                  {analysis.weeksBehind > 0 && (
+                    <div className="flex items-center gap-1.5 text-red-600 dark:text-red-400">
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      <span className="text-xs font-medium">{analysis.weeksBehind} {analysis.weeksBehind === 1 ? 'week' : 'weeks'} behind schedule</span>
+                    </div>
+                  )}
+                  {analysis.featuresBlocked > 0 && (
+                    <div className="flex items-center gap-1.5 text-red-600 dark:text-red-400">
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      <span className="text-xs font-medium">{analysis.featuresBlocked} {analysis.featuresBlocked === 1 ? 'feature' : 'features'} blocked</span>
+                    </div>
+                  )}
+                </div>
+              ) : null}
             </div>
 
             {/* Planned vs Actual Timeline */}
@@ -448,6 +474,10 @@ export default function FloatingSummary({ analysis: initialAnalysis, onAnalysisC
                 <span className="text-xs text-slate-600 dark:text-slate-400 w-14">Planned</span>
                 <div className="flex-1 relative h-2">
                   <div className="absolute inset-0 bg-slate-200 dark:bg-slate-600 rounded-full"></div>
+                  <div
+                    className="absolute inset-y-0 left-0 bg-green-500 rounded-full"
+                    style={{ width: '75%' }}
+                  ></div>
                   <div className="absolute inset-0 flex items-center">
                     <div
                       className="h-3 w-3 bg-green-500 border-2 border-white dark:border-slate-800 rounded-full shadow-sm"
@@ -514,23 +544,29 @@ export default function FloatingSummary({ analysis: initialAnalysis, onAnalysisC
                 </span>
               </div>
 
-              {/* Delay Indicator */}
+              {/* Behind schedule indicator */}
               {!analysis.timelineDrift.toLowerCase().includes('ahead') && !analysis.timelineDrift.toLowerCase().includes('on track') && (
-                <div className="flex items-center gap-2 pt-1">
-                  <span className="text-xs text-slate-500 dark:text-slate-400 w-14"></span>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-1 text-xs text-red-600 dark:text-red-400">
-                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                      </svg>
-                      <span className="font-medium">30% behind schedule</span>
-                    </div>
-                  </div>
-                  <span className="w-8"></span>
-                </div>
+                <p className="text-xs text-red-600 dark:text-red-400 mt-2">
+                  ↓ 30% behind schedule
+                </p>
               )}
             </div>
           </div>
+
+          {/* Key Concerns (condensed) */}
+          {analysis.keyConcerns && analysis.keyConcerns.length > 0 && (
+            <div className="mb-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+              <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-2">Key Concerns</h4>
+              <ul className="space-y-1.5">
+                {analysis.keyConcerns.slice(0, 3).map((concern, index) => (
+                  <li key={index} className="flex items-start gap-1.5 text-xs text-slate-700 dark:text-slate-300">
+                    <span className="text-red-600 dark:text-red-400 mt-0.5">•</span>
+                    <span>{concern}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {/* Last Analysis Banner with Re-run */}
           {lastAnalysisTime && (
@@ -622,9 +658,16 @@ export default function FloatingSummary({ analysis: initialAnalysis, onAnalysisC
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                GitHub Repository (owner/repo)
-              </label>
+              <div className="flex items-center gap-1.5 mb-1">
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+                  GitHub Repository (owner/repo)
+                </label>
+                <Tooltip content="Format: owner/repository (e.g., facebook/react). Find this in your GitHub repo URL.">
+                  <svg className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </Tooltip>
+              </div>
               <input
                 type="text"
                 value={repository}
@@ -636,9 +679,16 @@ export default function FloatingSummary({ analysis: initialAnalysis, onAnalysisC
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                PRD File Path
-              </label>
+              <div className="flex items-center gap-1.5 mb-1">
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+                  PRD File Path
+                </label>
+                <Tooltip content="Path to your PRD markdown file in the repository (e.g., docs/prd.md or README.md)">
+                  <svg className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </Tooltip>
+              </div>
               <input
                 type="text"
                 value={prdPath}
@@ -649,9 +699,16 @@ export default function FloatingSummary({ analysis: initialAnalysis, onAnalysisC
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Issue Labels (optional)
-              </label>
+              <div className="flex items-center gap-1.5 mb-1">
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+                  Issue Labels (optional)
+                </label>
+                <Tooltip content="Filter GitHub issues by labels (e.g., 'feature, enhancement'). Leave empty to analyze all issues.">
+                  <svg className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </Tooltip>
+              </div>
               <input
                 type="text"
                 value={issueLabels}
@@ -662,9 +719,16 @@ export default function FloatingSummary({ analysis: initialAnalysis, onAnalysisC
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                GitHub Personal Access Token
-              </label>
+              <div className="flex items-center gap-1.5 mb-1">
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+                  GitHub Personal Access Token
+                </label>
+                <Tooltip content="Create at github.com/settings/tokens. Needs 'repo' read access to fetch issues and PRD.">
+                  <svg className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </Tooltip>
+              </div>
               <input
                 type="password"
                 value={githubToken}
@@ -680,9 +744,16 @@ export default function FloatingSummary({ analysis: initialAnalysis, onAnalysisC
 
             {!demoMode && (
               <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Anthropic API Key
-                </label>
+                <div className="flex items-center gap-1.5 mb-1">
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+                    Anthropic API Key
+                  </label>
+                  <Tooltip content="Get your API key at console.anthropic.com. Used for AI-powered drift analysis.">
+                    <svg className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </Tooltip>
+                </div>
                 <input
                   type="password"
                   value={anthropicKey}

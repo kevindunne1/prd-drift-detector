@@ -13,6 +13,12 @@ interface DriftDashboardProps {
   };
 }
 
+const getRiskLevel = (score: number) => {
+  if (score >= 70) return { label: "High Risk", color: "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300" };
+  if (score >= 40) return { label: "Moderate Risk", color: "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300" };
+  return { label: "Low Risk", color: "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300" };
+};
+
 type ViewMode = "cards" | "table";
 type StatusFilter = "delivered" | "in_progress" | "partial" | "missing" | "out_of_scope";
 
@@ -101,27 +107,26 @@ export default function DriftDashboard({ analysis, metadata }: DriftDashboardPro
     }
   };
 
+  const deliveredCount = analysis.requirementsDrift.filter(r => r.status === "delivered").length;
+  const totalRequirementsExcludingOutOfScope = analysis.requirementsDrift.filter(r => r.status !== "out_of_scope").length;
+
   return (
     <div className="mt-8 space-y-6">
-      {/* Metadata */}
-      <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
-        <h3 className="font-semibold text-slate-900 dark:text-white mb-2">Repository Analysis</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+      {/* Repository Analysis Header */}
+      <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-6 border border-slate-200 dark:border-slate-700">
+        <div className="flex items-start justify-between">
           <div>
-            <p className="text-slate-600 dark:text-slate-400">Repository</p>
-            <p className="font-medium text-slate-900 dark:text-white">{metadata.repository}</p>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">Repository Analysis</h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              {metadata.repository} • {metadata.prdPath}
+            </p>
           </div>
-          <div>
-            <p className="text-slate-600 dark:text-slate-400">PRD Path</p>
-            <p className="font-medium text-slate-900 dark:text-white">{metadata.prdPath}</p>
-          </div>
-          <div>
-            <p className="text-slate-600 dark:text-slate-400">Requirements</p>
-            <p className="font-medium text-slate-900 dark:text-white">{metadata.totalRequirements}</p>
-          </div>
-          <div>
-            <p className="text-slate-600 dark:text-slate-400">Issues</p>
-            <p className="font-medium text-slate-900 dark:text-white">{metadata.totalIssues}</p>
+          <div className="text-right">
+            <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">Requirements</p>
+            <p className="text-2xl font-semibold text-slate-900 dark:text-white">
+              {deliveredCount}
+              <span className="text-base text-slate-500 dark:text-slate-400">/{totalRequirementsExcludingOutOfScope}</span>
+            </p>
           </div>
         </div>
       </div>
@@ -173,11 +178,14 @@ export default function DriftDashboard({ analysis, metadata }: DriftDashboardPro
         {/* Risk Score Card */}
         <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md dark:shadow-slate-900/50 p-6">
           <h3 className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-4">Overall Risk Score</h3>
-          <div className="flex items-center justify-center h-32">
+          <div className="flex flex-col items-center justify-center h-32 gap-3">
             <p className="text-5xl font-bold text-slate-900 dark:text-white">
               {analysis.riskScore}
               <span className="text-2xl text-slate-500 dark:text-slate-400">/100</span>
             </p>
+            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getRiskLevel(analysis.riskScore).color}`}>
+              {getRiskLevel(analysis.riskScore).label}
+            </span>
           </div>
         </div>
 
@@ -185,21 +193,37 @@ export default function DriftDashboard({ analysis, metadata }: DriftDashboardPro
         <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md dark:shadow-slate-900/50 p-6">
           <h3 className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-4">Timeline Status</h3>
           <div className="space-y-3">
-            <div className={`text-center px-3 py-1.5 rounded text-xs font-semibold ${
-              analysis.timelineDrift.toLowerCase().includes('ahead')
-                ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-                : analysis.timelineDrift.toLowerCase().includes('on track') || analysis.timelineDrift.toLowerCase().includes('on schedule')
-                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
-            }`}>
-              {analysis.timelineDrift}
-            </div>
+            {/* Timeline Summary - warning icons without box */}
+            {analysis.weeksBehind > 0 || analysis.featuresBlocked > 0 ? (
+              <div className="space-y-2 mb-3">
+                {analysis.weeksBehind > 0 && (
+                  <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <span className="text-sm font-medium">{analysis.weeksBehind} {analysis.weeksBehind === 1 ? 'week' : 'weeks'} behind schedule</span>
+                  </div>
+                )}
+                {analysis.featuresBlocked > 0 && (
+                  <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <span className="text-sm font-medium">{analysis.featuresBlocked} {analysis.featuresBlocked === 1 ? 'feature' : 'features'} blocked</span>
+                  </div>
+                )}
+              </div>
+            ) : null}
 
             {/* Planned Position */}
             <div className="flex items-center gap-2">
               <span className="text-xs text-slate-600 dark:text-slate-400 w-16">Planned</span>
               <div className="flex-1 relative h-2">
                 <div className="absolute inset-0 bg-slate-200 dark:bg-slate-600 rounded-full"></div>
+                <div
+                  className="absolute inset-y-0 left-0 bg-green-500 rounded-full"
+                  style={{ width: '75%' }}
+                ></div>
                 <div className="absolute inset-0 flex items-center">
                   <div
                     className="h-3 w-3 bg-green-500 border-2 border-white dark:border-slate-800 rounded-full shadow-sm"
@@ -266,29 +290,97 @@ export default function DriftDashboard({ analysis, metadata }: DriftDashboardPro
               </span>
             </div>
 
-            {/* Delay Indicator */}
+            {/* Behind schedule indicator */}
             {!analysis.timelineDrift.toLowerCase().includes('ahead') && !analysis.timelineDrift.toLowerCase().includes('on track') && (
-              <div className="flex items-center gap-2 pt-1">
-                <span className="text-xs text-slate-500 dark:text-slate-400 w-16"></span>
-                <div className="flex-1">
-                  <div className="flex items-center gap-1 text-xs text-red-600 dark:text-red-400">
-                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                    <span className="font-medium">30% behind schedule</span>
-                  </div>
-                </div>
-                <span className="w-10"></span>
-              </div>
+              <p className="text-xs text-red-600 dark:text-red-400 mt-2">
+                ↓ 30% behind schedule
+              </p>
             )}
           </div>
         </div>
       </div>
 
-      {/* Summary */}
+      {/* Executive Summary */}
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md dark:shadow-slate-900/50 p-6">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">Executive Summary</h3>
-        <p className="text-slate-700 dark:text-slate-300">{analysis.summary}</p>
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Executive Summary</h3>
+
+        <div className="space-y-4">
+          {/* Risk-colored alert with summary */}
+          <div className={`flex items-start gap-3 p-4 border rounded-lg ${
+            analysis.riskScore >= 70
+              ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+              : analysis.riskScore >= 40
+              ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800'
+              : 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+          }`}>
+            <svg className={`w-5 h-5 flex-shrink-0 mt-0.5 ${
+              analysis.riskScore >= 70
+                ? 'text-red-600 dark:text-red-400'
+                : analysis.riskScore >= 40
+                ? 'text-amber-600 dark:text-amber-400'
+                : 'text-green-600 dark:text-green-400'
+            }`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <p className={`text-sm leading-relaxed ${
+              analysis.riskScore >= 70
+                ? 'text-red-900 dark:text-red-100'
+                : analysis.riskScore >= 40
+                ? 'text-amber-900 dark:text-amber-100'
+                : 'text-green-900 dark:text-green-100'
+            }`}>
+              {analysis.summary}
+            </p>
+          </div>
+
+          {/* Key Metrics */}
+          <div className="grid grid-cols-2 gap-4">
+            {analysis.weeksBehind > 0 && (
+              <div className="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <svg className="w-4 h-4 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+                  </svg>
+                  <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Behind Schedule</span>
+                </div>
+                <p className="text-2xl font-bold text-slate-900 dark:text-white">{analysis.weeksBehind}</p>
+                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                  {analysis.weeksBehind === 1 ? 'week behind' : 'weeks behind'} planned timeline
+                </p>
+              </div>
+            )}
+
+            {analysis.featuresBlocked > 0 && (
+              <div className="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <svg className="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <span className="text-sm font-medium text-slate-600 dark:text-slate-400">At Risk</span>
+                </div>
+                <p className="text-2xl font-bold text-slate-900 dark:text-white">{analysis.featuresBlocked}</p>
+                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                  {analysis.featuresBlocked === 1 ? 'feature' : 'features'} blocked or incomplete
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Key Concerns */}
+          {analysis.keyConcerns && analysis.keyConcerns.length > 0 && (
+            <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
+              <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">Key Concerns</h4>
+              <ul className="space-y-2">
+                {analysis.keyConcerns.map((concern, index) => (
+                  <li key={index} className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300">
+                    <span className="text-red-600 dark:text-red-400 mt-0.5">•</span>
+                    <span>{concern}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Requirements Drift Details */}
@@ -332,20 +424,26 @@ export default function DriftDashboard({ analysis, metadata }: DriftDashboardPro
             { status: "partial" as StatusFilter, label: "Partial", icon: "⚠️" },
             { status: "missing" as StatusFilter, label: "Missing", icon: "❌" },
             { status: "out_of_scope" as StatusFilter, label: "Out of Scope", icon: "⊗" },
-          ].map(({ status, label, icon }) => (
-            <button
-              key={status}
-              onClick={() => toggleStatusFilter(status)}
-              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
-                statusFilters.includes(status)
-                  ? getStatusBadgeColor(status)
-                  : "bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-600 opacity-50"
-              }`}
-            >
-              <span className="mr-1">{icon}</span>
-              {label}
-            </button>
-          ))}
+          ].map(({ status, label, icon }) => {
+            const count = analysis.requirementsDrift.filter((r) => r.status === status).length;
+            return (
+              <button
+                key={status}
+                onClick={() => toggleStatusFilter(status)}
+                className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
+                  statusFilters.includes(status)
+                    ? getStatusBadgeColor(status)
+                    : "bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-600 opacity-50"
+                }`}
+              >
+                <span>{icon}</span>
+                <span>{label}</span>
+                <span className="px-1.5 py-0.5 rounded text-xs font-semibold bg-slate-900/10 dark:bg-black/20">
+                  {count}
+                </span>
+              </button>
+            );
+          })}
           {statusFilters.length === 0 && (
             <span className="text-sm text-slate-500 dark:text-slate-400 italic self-center">
               (Select at least one filter to view requirements)
