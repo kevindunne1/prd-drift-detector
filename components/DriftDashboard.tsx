@@ -115,8 +115,8 @@ export default function DriftDashboard({ analysis, metadata }: DriftDashboardPro
 
   return (
     <div className="space-y-6">
-      {/* Repository Analysis Section */}
-      <div className="space-y-4">
+      {/* Repository Analysis Section - Unified Container */}
+      <div className="bg-slate-50 dark:bg-slate-800/30 rounded-lg p-6 space-y-4">
         {/* Section Header with Repository Info */}
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
