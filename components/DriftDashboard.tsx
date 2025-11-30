@@ -115,16 +115,17 @@ export default function DriftDashboard({ analysis, metadata }: DriftDashboardPro
 
   return (
     <div className="mt-8 space-y-6">
-      {/* Repository Analysis Header - Compact Design */}
-      <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg px-6 py-4 border border-slate-200 dark:border-slate-700/50">
+      {/* Repository Analysis Section */}
+      <div className="space-y-4">
+        {/* Section Header with Repository Info */}
         <div className="flex items-center justify-between">
           <div className="flex-1">
-            <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-1">Repository Analysis</h3>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-1">Repository Analysis</h2>
             <p className="text-sm text-slate-600 dark:text-slate-400">
               {metadata.repository} • {metadata.prdPath}
             </p>
           </div>
-          <div className="text-right ml-4">
+          <div className="text-right ml-4 bg-slate-100 dark:bg-slate-700/50 rounded-lg px-4 py-2">
             <p className="text-xs text-slate-500 dark:text-slate-400 mb-0.5">Requirements</p>
             <p className="text-lg font-semibold text-slate-900 dark:text-white">
               {openRequirements}
@@ -132,10 +133,9 @@ export default function DriftDashboard({ analysis, metadata }: DriftDashboardPro
             </p>
           </div>
         </div>
-      </div>
 
-      {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Overview Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Completion Card with Circular Gauge */}
         <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md dark:shadow-slate-900/50 p-6">
           <h3 className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-4">Completion</h3>
@@ -300,6 +300,7 @@ export default function DriftDashboard({ analysis, metadata }: DriftDashboardPro
               </p>
             )}
           </div>
+        </div>
         </div>
       </div>
 

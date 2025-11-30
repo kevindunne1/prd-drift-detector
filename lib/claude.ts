@@ -7,6 +7,7 @@ export interface DriftAnalysis {
   matchedIssues: number[];
   driftDescription: string;
   riskLevel: "low" | "medium" | "high";
+  intendedValue: "high" | "medium" | "low";
 }
 
 export interface OverallAnalysis {
@@ -18,6 +19,8 @@ export interface OverallAnalysis {
   keyConcerns: string[];
   weeksBehind: number;
   featuresBlocked: number;
+  alignmentScore: number;
+  costOfDelayItems: string[];
 }
 
 export class ClaudeAnalyzer {
@@ -102,6 +105,10 @@ For each requirement, determine:
 2. **Matched Issues**: Which GitHub issue numbers correspond to this requirement (if any)
 3. **Drift Description**: Explain any scope drift, timeline changes, or misalignment between what was planned and what was/is being delivered
 4. **Risk Level**: low (delivered or minor issues), medium (partial delivery or moderate concerns), high (missing, blocked, or critical drift). Use "low" for out_of_scope items.
+5. **Intended Value** (NEW): Assess the original intended business value/priority of this requirement from the PRD:
+   - high: Core functionality, revenue drivers, strategic differentiators, security/compliance requirements
+   - medium: Important features that enhance the product but aren't critical to core value proposition
+   - low: Nice-to-haves, minor enhancements, polish items
 
 **IMPORTANT**: Be consistent with status assignments. If a requirement has a closed issue that addresses it, mark it as "delivered" unless there's clear evidence it's incomplete.
 
@@ -113,6 +120,8 @@ Also provide:
 - **Features Blocked**: Count of requirements with status "missing" or "partial" AND risk level "high" or "medium"
 - **Key Concerns**: Array of 3-5 brief concerns from high/medium risk requirements
 - **Summary**: 2-3 sentence overall assessment
+- **Alignment Score** (NEW): Calculate as (number of "high intended value" requirements that are "delivered" or "in_progress") / (total "high intended value" requirements excluding "out_of_scope") × 100. This measures % of high-value features on track.
+- **Cost of Delay Items** (NEW): Array of 3-5 brief descriptions of high-value requirements (intendedValue="high") that have status "missing" or "partial". These represent the biggest ROI risks. Format: "[Requirement summary] - [Brief impact]"
 
 Return your analysis as JSON in this exact format:
 \`\`\`json
@@ -122,6 +131,12 @@ Return your analysis as JSON in this exact format:
   "timelineDrift": "3 weeks behind schedule",
   "weeksBehind": 3,
   "featuresBlocked": 5,
+  "alignmentScore": 62,
+  "costOfDelayItems": [
+    "Export access control not implemented - Security compliance risk",
+    "Scheduled exports missing - Key revenue feature delayed",
+    "Audit logging incomplete - Regulatory requirement unmet"
+  ],
   "keyConcerns": [
     "Scheduled exports feature not started (high priority)",
     "Custom export templates only partially implemented",
@@ -134,14 +149,16 @@ Return your analysis as JSON in this exact format:
       "status": "delivered",
       "matchedIssues": [1, 5],
       "driftDescription": "Requirement delivered as planned",
-      "riskLevel": "low"
+      "riskLevel": "low",
+      "intendedValue": "medium"
     },
     {
       "requirementId": "req-2",
       "status": "partial",
       "matchedIssues": [7],
       "driftDescription": "PRD specified CSV export, but only PDF was delivered",
-      "riskLevel": "medium"
+      "riskLevel": "medium",
+      "intendedValue": "high"
     }
   ]
 }
@@ -171,6 +188,7 @@ Be precise, objective, and focus on identifying genuine drift (not minor impleme
             matchedIssues: drift.matchedIssues || [],
             driftDescription: drift.driftDescription,
             riskLevel: drift.riskLevel,
+            intendedValue: drift.intendedValue || "medium", // Fallback to medium
           };
         }
       );
@@ -191,6 +209,8 @@ Be precise, objective, and focus on identifying genuine drift (not minor impleme
         keyConcerns: parsed.keyConcerns || [],
         weeksBehind: parsed.weeksBehind || 0,
         featuresBlocked: parsed.featuresBlocked || 0,
+        alignmentScore: parsed.alignmentScore || 0,
+        costOfDelayItems: parsed.costOfDelayItems || [],
       };
     } catch (error) {
       console.error("Error parsing Claude response:", error);
@@ -207,11 +227,14 @@ Be precise, objective, and focus on identifying genuine drift (not minor impleme
           matchedIssues: [],
           driftDescription: "Analysis failed",
           riskLevel: "high" as const,
+          intendedValue: "medium" as const,
         })),
         summary: "Failed to parse analysis from Claude API",
         keyConcerns: ["Analysis failed - unable to extract key concerns"],
         weeksBehind: 0,
         featuresBlocked: 0,
+        alignmentScore: 0,
+        costOfDelayItems: [],
       };
     }
   }
