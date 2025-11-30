@@ -104,7 +104,10 @@ For each requirement, determine:
    - out_of_scope: requirement explicitly removed from scope or marked as future work
 2. **Matched Issues**: Which GitHub issue numbers correspond to this requirement (if any)
 3. **Drift Description**: Explain any scope drift, timeline changes, or misalignment between what was planned and what was/is being delivered
-4. **Risk Level**: low (delivered or minor issues), medium (partial delivery or moderate concerns), high (missing, blocked, or critical drift). Use "low" for out_of_scope items.
+4. **Risk Level** - Apply these rules CONSISTENTLY:
+   - **high**: Requirements with status "missing" (not started) OR security/compliance/critical requirements that are "partial" or "in_progress"
+   - **medium**: Requirements with status "partial" (incomplete) OR important requirements with status "in_progress"
+   - **low**: Requirements with status "delivered" OR minor/nice-to-have requirements OR status "out_of_scope"
 5. **Intended Value** (NEW): Assess the original intended business value/priority of this requirement from the PRD:
    - high: Core functionality, revenue drivers, strategic differentiators, security/compliance requirements
    - medium: Important features that enhance the product but aren't critical to core value proposition
