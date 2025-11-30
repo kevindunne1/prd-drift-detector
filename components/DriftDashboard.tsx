@@ -107,25 +107,28 @@ export default function DriftDashboard({ analysis, metadata }: DriftDashboardPro
     }
   };
 
-  const deliveredCount = analysis.requirementsDrift.filter(r => r.status === "delivered").length;
-  const totalRequirementsExcludingOutOfScope = analysis.requirementsDrift.filter(r => r.status !== "out_of_scope").length;
+  // Requirements with work = delivered + in_progress + partial
+  const requirementsWithWork = analysis.requirementsDrift.filter(r =>
+    r.status === "delivered" || r.status === "in_progress" || r.status === "partial"
+  ).length;
+  const totalRequirements = analysis.requirementsDrift.length;
 
   return (
     <div className="mt-8 space-y-6">
-      {/* Repository Analysis Header */}
-      <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-6 border border-slate-200 dark:border-slate-700">
-        <div className="flex items-start justify-between">
-          <div>
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">Repository Analysis</h3>
+      {/* Repository Analysis Header - Compact Design */}
+      <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg px-6 py-4 border border-slate-200 dark:border-slate-700/50">
+        <div className="flex items-center justify-between">
+          <div className="flex-1">
+            <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-1">Repository Analysis</h3>
             <p className="text-sm text-slate-600 dark:text-slate-400">
               {metadata.repository} • {metadata.prdPath}
             </p>
           </div>
-          <div className="text-right">
-            <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">Requirements</p>
-            <p className="text-2xl font-semibold text-slate-900 dark:text-white">
-              {deliveredCount}
-              <span className="text-base text-slate-500 dark:text-slate-400">/{totalRequirementsExcludingOutOfScope}</span>
+          <div className="text-right ml-4">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-0.5">Requirements</p>
+            <p className="text-lg font-semibold text-slate-900 dark:text-white">
+              {requirementsWithWork}
+              <span className="text-sm text-slate-500 dark:text-slate-400 font-normal">/{totalRequirements}</span>
             </p>
           </div>
         </div>
