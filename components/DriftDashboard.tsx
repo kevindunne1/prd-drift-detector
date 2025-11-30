@@ -107,9 +107,9 @@ export default function DriftDashboard({ analysis, metadata }: DriftDashboardPro
     }
   };
 
-  // Requirements with work = delivered + in_progress + partial
-  const requirementsWithWork = analysis.requirementsDrift.filter(r =>
-    r.status === "delivered" || r.status === "in_progress" || r.status === "partial"
+  // Open requirements = in_progress + partial + missing (excluding delivered and out_of_scope)
+  const openRequirements = analysis.requirementsDrift.filter(r =>
+    r.status === "in_progress" || r.status === "partial" || r.status === "missing"
   ).length;
   const totalRequirements = analysis.requirementsDrift.length;
 
@@ -127,7 +127,7 @@ export default function DriftDashboard({ analysis, metadata }: DriftDashboardPro
           <div className="text-right ml-4">
             <p className="text-xs text-slate-500 dark:text-slate-400 mb-0.5">Requirements</p>
             <p className="text-lg font-semibold text-slate-900 dark:text-white">
-              {requirementsWithWork}
+              {openRequirements}
               <span className="text-sm text-slate-500 dark:text-slate-400 font-normal">/{totalRequirements}</span>
             </p>
           </div>
