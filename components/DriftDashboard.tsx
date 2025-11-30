@@ -135,7 +135,7 @@ export default function DriftDashboard({ analysis, metadata }: DriftDashboardPro
         </div>
 
         {/* Overview Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Completion Card with Circular Gauge */}
         <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md dark:shadow-slate-900/50 p-6">
           <h3 className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-4">Completion</h3>
@@ -301,6 +301,51 @@ export default function DriftDashboard({ analysis, metadata }: DriftDashboardPro
             )}
           </div>
         </div>
+
+        {/* Alignment Score Card (ROI Phase 1) */}
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md dark:shadow-slate-900/50 p-6">
+          <h3 className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-4">Alignment Score</h3>
+          <div className="flex items-center justify-center">
+            <div className="relative w-32 h-32">
+              <svg className="transform -rotate-90" width="128" height="128">
+                <circle
+                  cx="64"
+                  cy="64"
+                  r="56"
+                  stroke="currentColor"
+                  strokeWidth="8"
+                  fill="none"
+                  className="text-slate-200 dark:text-slate-700"
+                />
+                <circle
+                  cx="64"
+                  cy="64"
+                  r="56"
+                  stroke={
+                    analysis.alignmentScore >= 80
+                      ? "#10b981"
+                      : analysis.alignmentScore >= 50
+                      ? "#f59e0b"
+                      : "#ef4444"
+                  }
+                  strokeWidth="8"
+                  fill="none"
+                  strokeDasharray={`${(analysis.alignmentScore / 100) * 351.86} 351.86`}
+                  strokeLinecap="round"
+                  className="transition-all duration-500"
+                />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-4xl font-bold text-slate-900 dark:text-white">
+                  {analysis.alignmentScore}
+                </span>
+              </div>
+            </div>
+          </div>
+          <p className="text-xs text-center text-slate-600 dark:text-slate-400 mt-3">
+            % of high-value features on track
+          </p>
+        </div>
         </div>
       </div>
 
@@ -384,6 +429,128 @@ export default function DriftDashboard({ analysis, metadata }: DriftDashboardPro
               </ul>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Cost of Delay Section (ROI Phase 1) */}
+      {analysis.costOfDelayItems && analysis.costOfDelayItems.length > 0 && (
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md dark:shadow-slate-900/50 p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <svg className="w-5 h-5 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Cost of Delay</h3>
+          </div>
+          <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+            High-value requirements that are missing or incomplete represent the biggest ROI risks to your product.
+          </p>
+          <div className="space-y-3">
+            {analysis.costOfDelayItems.map((item, index) => (
+              <div key={index} className="flex items-start gap-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                <svg className="w-5 h-5 flex-shrink-0 mt-0.5 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <p className="text-sm text-red-900 dark:text-red-100 leading-relaxed">
+                  {item}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Value Stream Risk Heatmap (ROI Phase 1) */}
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md dark:shadow-slate-900/50 p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Value Stream Risk Heatmap</h3>
+        </div>
+        <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+          Visual breakdown of requirements by intended business value and execution status.
+        </p>
+
+        {(() => {
+          // Calculate the heatmap matrix
+          const matrix: Record<string, Record<string, number>> = {
+            high: { delivered: 0, in_progress: 0, partial: 0, missing: 0 },
+            medium: { delivered: 0, in_progress: 0, partial: 0, missing: 0 },
+            low: { delivered: 0, in_progress: 0, partial: 0, missing: 0 },
+          };
+
+          // Populate the matrix (excluding out_of_scope)
+          analysis.requirementsDrift.forEach((drift) => {
+            if (drift.status !== 'out_of_scope' && drift.intendedValue && matrix[drift.intendedValue]) {
+              const status = drift.status as 'delivered' | 'in_progress' | 'partial' | 'missing';
+              if (matrix[drift.intendedValue][status] !== undefined) {
+                matrix[drift.intendedValue][status]++;
+              }
+            }
+          });
+
+          const getHeatmapColor = (value: string, status: string, count: number) => {
+            if (count === 0) return 'bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500';
+
+            // High-value missing/partial = red (critical risk)
+            if (value === 'high' && (status === 'missing' || status === 'partial')) {
+              return 'bg-red-100 dark:bg-red-900/30 text-red-900 dark:text-red-100 font-bold border-2 border-red-300 dark:border-red-700';
+            }
+            // High-value in_progress = amber (moderate risk)
+            if (value === 'high' && status === 'in_progress') {
+              return 'bg-amber-100 dark:bg-amber-900/30 text-amber-900 dark:text-amber-100 font-semibold';
+            }
+            // High-value delivered = green (good)
+            if (value === 'high' && status === 'delivered') {
+              return 'bg-green-100 dark:bg-green-900/30 text-green-900 dark:text-green-100';
+            }
+            // Medium-value missing/partial = amber
+            if (value === 'medium' && (status === 'missing' || status === 'partial')) {
+              return 'bg-amber-100 dark:bg-amber-900/30 text-amber-900 dark:text-amber-100';
+            }
+            // Everything else = neutral
+            return 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-slate-100';
+          };
+
+          return (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm border-collapse">
+                <thead>
+                  <tr className="border-b-2 border-slate-300 dark:border-slate-600">
+                    <th className="text-left py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Value</th>
+                    <th className="text-center py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Delivered</th>
+                    <th className="text-center py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">In Progress</th>
+                    <th className="text-center py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Partial</th>
+                    <th className="text-center py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Missing</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(['high', 'medium', 'low'] as const).map((value) => (
+                    <tr key={value} className="border-b border-slate-200 dark:border-slate-700">
+                      <td className="py-3 px-4 font-semibold text-slate-900 dark:text-white capitalize">
+                        {value} Value
+                      </td>
+                      {(['delivered', 'in_progress', 'partial', 'missing'] as const).map((status) => (
+                        <td key={status} className="py-3 px-4 text-center">
+                          <div className={`inline-flex items-center justify-center min-w-[2.5rem] px-3 py-2 rounded-lg ${getHeatmapColor(value, status, matrix[value][status])}`}>
+                            {matrix[value][status]}
+                          </div>
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          );
+        })()}
+
+        <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+          <p className="text-xs text-slate-600 dark:text-slate-400">
+            <strong>Red cells</strong> = Critical ROI risk (high-value features missing/incomplete) •
+            <strong className="ml-2">Amber cells</strong> = Moderate risk •
+            <strong className="ml-2">Green cells</strong> = On track
+          </p>
         </div>
       </div>
 
